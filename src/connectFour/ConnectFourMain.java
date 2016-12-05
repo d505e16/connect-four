@@ -8,7 +8,7 @@ public class ConnectFourMain {
 		long startTime, endTime;
 		Date date = new Date();
 		startTime = date.getTime();
-		String s = "01234560123456012345601234561";
+		String s = "012345601234560123456012345613";
 		//her under er til 4*5 board
 		//String s = "0101234322323444110";
 		//String s = "010123430"; // single thread 10500 ms
@@ -24,8 +24,8 @@ public class ConnectFourMain {
 		System.out.println("We are " + board.getNextTurn());
 		//MinimaxNewValueEstamation mm = new MinimaxNewValueEstamation(board);
 		//MinimaxParallel mp = new MinimaxParallel(board);
-//		MinimaxDoubleRecurcive mm = new MinimaxDoubleRecurcive(board); mm.minimaxCalc();
 		
+//		MinimaxDoubleRecurcive mm = new MinimaxDoubleRecurcive(board); mm.minimaxCalc();
 		MinimaxDoubleRecurciveParallel mp = new MinimaxDoubleRecurciveParallel(board); mp.minimaxCalc();
 		System.out.println();
 		board.display();

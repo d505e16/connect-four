@@ -53,10 +53,10 @@ public class MinimaxDoubleRecurciveParallel extends MinimaxDoubleRecurcive {
 		int bestCol = -1;
 
 		for(int i = 0; i < COL; i++){
-			if(moves[i] == 1000){
+			if(moves[i] == 75){
 				System.out.println("Zugzwang if placing i col: " + i);
-			} else if(moves[i] == -1000/2){
-				System.out.println("11Opponent wil get Zugzwang if not placed i col: " + i);
+			} else if(moves[i] == -100){
+				System.out.println("Opponent wil get Zugzwang if not placed i col: " + i);
 			} 
 		}
 		for(int i = 0; i < COL; i++){	
