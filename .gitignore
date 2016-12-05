@@ -1,4 +1,7 @@
 .idea/
 .settings/
 out/
+bin/
 connect-four.iml
+.project
+.classpath
