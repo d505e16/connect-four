@@ -22,13 +22,13 @@ public class MinimaxDoubleRecurcive {
 	public void minimaxCalc(){
 		for(int i = 0; i < COL; i++){
 			int row = board.firstEmptyInCol(i);
-			if(row != -1){  // når row er -1 hvis rækken er fuld
+			if(row != -1){  // nÃ¥r row er -1 hvis rÃ¦kken er fuld
 				Board tempBoard = new Board(this.board.getBoardString().concat(String.valueOf(i)));
 				if(tempBoard.isTerminal(row, i)){ 
 					//terminal
 					//System.out.println(tempBoard.getBoardString() + " is terminal ");
 					moves[i] = terminalValue(tempBoard);
-				} else if(tempBoard.isBoardFull()) {//tie - behøver ikke cutoff i noden 
+				} else if(tempBoard.isBoardFull()) {//tie - behÃ¸ver ikke cutoff i noden 
 					moves[i] = 0;
 				} else {
 					moves[i] = miniCalc(tempBoard, DEPTH + 1);

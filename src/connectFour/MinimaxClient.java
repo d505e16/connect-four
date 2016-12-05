@@ -30,7 +30,7 @@ public class MinimaxClient {
 //			Socket socket = new Socket(HOST_NAME, PORT_NUMBER);
 			
 			
-			//run minimax på args (constructer parameter) 
+			//run minimax pÃ¥ args (constructer parameter) 
 			//i minimax sendes boardString med printWriter til serveren
 			PrintWriter printWriter = new PrintWriter(socket.getOutputStream(), true);
 			printWriter.println(boardString);

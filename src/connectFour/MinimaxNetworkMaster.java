@@ -36,7 +36,7 @@ public class MinimaxNetworkMaster extends MinimaxDoubleRecurcive {
 //	public double communicateWithServer(String boardString){//kun fra local nu
 //		double branchValue = 0;
 //		try {
-//			//run minimax på args (constructer parameter) 
+//			//run minimax pÃ¥ args (constructer parameter) 
 //			//i minimax sender boardString med printWriter til serveren
 ////			PrintWriter printWriter = new PrintWriter(socket.getOutputStream(), true);
 ////			printWriter.println(boardString);
@@ -77,13 +77,13 @@ public class MinimaxNetworkMaster extends MinimaxDoubleRecurcive {
 		
 		for(int i = 0; i < COL; i++){
 			int row = board.firstEmptyInCol(i);
-			if(row != -1){  // når row er -1 hvis rækken er fuld
+			if(row != -1){  // nÃ¥r row er -1 hvis rÃ¦kken er fuld
 				Board tempBoard = new Board(this.board.getBoardString().concat(String.valueOf(i)));
 				if(tempBoard.isTerminal(row, i)){ 
 					//terminal
 					//System.out.println(tempBoard.getBoardString() + " is terminal ");
 					moves[i] = terminalValue(tempBoard);
-				} else if(tempBoard.isBoardFull()) {//tie - behøver ikke cutoff i noden 
+				} else if(tempBoard.isBoardFull()) {//tie - behÃ¸ver ikke cutoff i noden 
 					moves[i] = 0;
 				} else {//test
 					//not terminal
@@ -115,7 +115,7 @@ public class MinimaxNetworkMaster extends MinimaxDoubleRecurcive {
 
 		threadPool.shutdown();
 		
-		while(!threadPool.isTerminated()){}//blocker til stringene er færdige med at køre!
+		while(!threadPool.isTerminated()){}//blocker til stringene er fÃ¦rdige med at kÃ¸re!
 		try {
 			socket.close();
 		} catch (IOException e) {

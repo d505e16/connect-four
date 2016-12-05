@@ -13,9 +13,9 @@ public class ConnectFourMain {
 		//String s = "0101234322323444110";
 		//String s = "010123430"; // single thread 10500 ms
 		//String s = "010101344322324"; // single thread 20 ms
-		//String s = "24310324130200423411";//'o' kan vinde i næste runde
-		//String s = "23140320140332"; //hvis 2'er sættes ender man i double attack til modstanderen - skal løses
-		//String s = "231403201403322"; //double attack - skal løses - 'o' - i 2 og 4 har zugzwang 
+		//String s = "24310324130200423411";//'o' kan vinde i nÃ¦ste runde
+		//String s = "23140320140332"; //hvis 2'er sÃ¦ttes ender man i double attack til modstanderen - skal lÃ¸ses
+		//String s = "231403201403322"; //double attack - skal lÃ¸ses - 'o' - i 2 og 4 har zugzwang 
 		//String s = "2314032014033224";
 		//String s = "231403201403324210";
 		Board board = new Board(s);
