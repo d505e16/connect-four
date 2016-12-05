@@ -1,13 +1,13 @@
-package connectFour;
+package Minimax;
 
-public class MinimaxDoubleRecurcive {
+public class DoubleRecurcive {
 	protected final int COL, DEPTH, ROW, MAX_DEPTH;
 	protected final Character PLAYER;
 	protected Board board;
 	protected double[] moves;
 	private double returnValue;
 	
-	public MinimaxDoubleRecurcive(Board b) {
+	public DoubleRecurcive(Board b) {
 		this.board = b;
 		this.ROW = b.getRow();
 		this.COL = b.getCol();	
@@ -54,6 +54,7 @@ public class MinimaxDoubleRecurcive {
 				System.out.println("Opponent wil get Zugzwang if not placed i col: " + i);
 			} 
 		}
+
 		for(int i = 0; i < COL; i++){	
 			if(moves[i] >= best && moves[i] != 0){ // missing ground rules - center first
 				best = moves[i];
@@ -65,7 +66,7 @@ public class MinimaxDoubleRecurcive {
 		System.out.println("Best move is in col " + bestCol);
 	}
 	
-	protected double miniCalc(Board aBoard, int depth) {
+	public double miniCalc(Board aBoard, int depth) {
 		double[] moves = new double[COL];
 		int terminalCounter = 0;
 		double mini = 1000;
@@ -161,7 +162,7 @@ public class MinimaxDoubleRecurcive {
 		this.returnValue = d;
 	}
 	
-	protected double getReturnValue(){
+	public double getReturnValue(){
 		return returnValue;
 	}
 }

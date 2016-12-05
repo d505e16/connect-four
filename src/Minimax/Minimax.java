@@ -1,4 +1,4 @@
-package connectFour;
+package Minimax;
 
 public class Minimax {
 	protected final int col, depth, row;

@@ -1,4 +1,4 @@
-package connectFour;
+package Minimax;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -9,13 +9,13 @@ import java.net.UnknownHostException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public class MinimaxNetworkMaster extends MinimaxDoubleRecurcive {
+public class NetworkMaster extends DoubleRecurcive {
 	public Socket socket;
 	private PrintWriter printWriter;
 	private InputStreamReader inputStreamReader;
 	private BufferedReader bufferedReader;
 	
-	public MinimaxNetworkMaster(Board b) {
+	public NetworkMaster(Board b) {
 		super(b);
 		try {// lav sockets til servere! - alle tre
 			socket = new Socket("localhost", 4444);
@@ -157,7 +157,7 @@ public class MinimaxNetworkMaster extends MinimaxDoubleRecurcive {
 	
 	public static void main(String args[]) {
 		Board b = new Board("012345601234560123456012345613");
-		MinimaxNetworkMaster mnm = new MinimaxNetworkMaster(b);
+		NetworkMaster mnm = new NetworkMaster(b);
 //		mnm.communicateWithServer("012345601234560123456012345613");
 		mnm.minimaxCalc();
 		

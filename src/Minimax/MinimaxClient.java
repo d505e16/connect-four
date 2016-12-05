@@ -1,4 +1,4 @@
-package connectFour;
+package Minimax;
 
 import java.io.*;
 import java.net.*;

@@ -1,11 +1,11 @@
-package connectFour;
+package Minimax;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public class MinimaxDoubleRecurciveParallel extends MinimaxDoubleRecurcive {
+public class DoubleRecurciveParallel extends DoubleRecurcive {
 
-    public MinimaxDoubleRecurciveParallel(Board b) {
+    public DoubleRecurciveParallel(Board b) {
         super(b);
 //		minimaxCalc();
     }
