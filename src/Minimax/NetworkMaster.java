@@ -17,6 +17,10 @@ public class NetworkMaster extends DoubleRecurcive {
 	
 	public NetworkMaster(Board b) {
 		super(b);
+		connectSocket();
+	}
+	
+	private void connectSocket(){
 		try {// lav sockets til servere! - alle tre
 			socket = new Socket("localhost", 4444);
 			
@@ -33,47 +37,9 @@ public class NetworkMaster extends DoubleRecurcive {
 		}
 	}
 	
-//	public double communicateWithServer(String boardString){//kun fra local nu
-//		double branchValue = 0;
-//		try {
-//			//run minimax på args (constructer parameter) 
-//			//i minimax sender boardString med printWriter til serveren
-////			PrintWriter printWriter = new PrintWriter(socket.getOutputStream(), true);
-////			printWriter.println(boardString);
-//			
-//			//modtager resultatet fra serveren
-////			InputStreamReader inputStreamReader = new InputStreamReader(socket.getInputStream());
-////			BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
-////			String temp = bufferedReader.readLine();
-////			System.out.println(temp); // test print
-//			
-////			branchValue = Double.valueOf(temp);
-//			//branchValue skal gives vidre til minimax
-////			System.out.println("Max value for " + boardString+ " is: " + branchValue);
-//
-//			socket.close();
-//		} catch (UnknownHostException e) {
-//			e.printStackTrace();
-//		} catch (IOException e) {
-//			e.printStackTrace();
-//		}
-//		return branchValue;
-//	}
-	
 	public void minimaxCalc(){
 		
 		ExecutorService threadPool = Executors.newCachedThreadPool();
-		
-//		threadPool.execute(new Runnable() {
-//			public void run() {
-//				System.out.println("Thread " + 1 + " started...");
-//				double temp = communicateWithServer(board.getBoardString());
-//				moves[1] = temp;
-//				System.out.println("temp is: " + temp); // 
-//				System.out.println("Thread " + 1 + " Terminated!!!!!");
-//			}
-//		});
-		
 		
 		for(int i = 0; i < COL; i++){
 			int row = board.firstEmptyInCol(i);
@@ -95,20 +61,26 @@ public class NetworkMaster extends DoubleRecurcive {
 							try {
 							printWriter.println(tempBoard.getBoardString()); // write to localhost
 							System.out.println("send");
-							String tempString = bufferedReader.readLine();
+							String recivedString = bufferedReader.readLine();
 							System.out.println("read");
-							double branchValue = Double.valueOf(tempString);
-							System.out.println("Max value for " + tempBoard.getBoardString() + " is: " + branchValue);
-//							double temp = communicateWithServer(board.getBoardString());
-							moves[j] = branchValue;//temp;
-//							System.out.println("temp is: " + temp); // 
+//							double branchValue = Double.valueOf(recivedString);
+//							System.out.println("Min value for " + tempBoard.getBoardString() + " is: " + branchValue);
+							
+							//Spliter recivedString 1220125461:-25 finder placeringen for :, (:-1) = col , (:+res)=value 
+							//TODO lav metode
+							int indexOfColon = recivedString.indexOf(":");
+							int col = Character.getNumericValue(recivedString.charAt(indexOfColon-1));
+							double branchValue = Double.valueOf(recivedString.substring(indexOfColon+1));
+							
+							moves[col] = branchValue;
+							
 							System.out.println("Thread " + j + ": success");
 							} catch (IOException e) {
 								e.printStackTrace();
-							} // replay from localhost
+							} // from localhost
 							System.out.println("Thread " + j + " Terminated!!!!!");
 						}
-					});
+					});  
 				}
 			}
 		}
@@ -122,44 +94,41 @@ public class NetworkMaster extends DoubleRecurcive {
 			e.printStackTrace();
 		}
 		
+		//print
+		System.out.print("(");
+		for(int i = 0; i < COL; i++){
+			System.out.print(moves[i] + ", ");
+		}
+		System.out.println(")");
 		
+		//selection
+		double best = -1001;
+		int bestCol = -1;
 
-//		while(!threadPool.isTerminated()){}
-//		//print
-//		System.out.print("(");
-//		for(int i = 0; i < COL; i++){
-//			System.out.print(moves[i] + ", ");
-//		}
-//		System.out.println(")");
-//		
-//		//selection
-//		double best = -1001;
-//		int bestCol = -1;
-//
-//		for(int i = 0; i < COL; i++){
-//			if(moves[i] == 75){
-//				System.out.println("Zugzwang if placing i col: " + i);
-//			} else if(moves[i] == -100){
-//				System.out.println("Opponent wil get Zugzwang if not placed i col: " + i);
-//			} 
-//		}
-//		for(int i = 0; i < COL; i++){	
-//			if(moves[i] >= best && moves[i] != 0){ // missing ground rules - center first
-//				best = moves[i];
-//				System.out.println("new the best is: " + best);
-//				bestCol = i;
-//			}
-//		}
-//		
-//		System.out.println("Best move is in col " + bestCol);
+		for(int i = 0; i < COL; i++){
+			if(moves[i] == 75){
+				System.out.println("Zugzwang if placing i col: " + i);
+			} else if(moves[i] == -100){
+				System.out.println("Opponent wil get Zugzwang if not placed i col: " + i);
+			} 
+		}
+		for(int i = 0; i < COL; i++){	
+			if(moves[i] >= best && moves[i] != 0){ // missing ground rules - center first
+				best = moves[i];
+				System.out.println("new the best is: " + best);
+				bestCol = i;
+			}
+		}
+		
+		System.out.println("Best move is in col " + bestCol);
 	}
 
 	
 	public static void main(String args[]) {
-		Board b = new Board("012345601234560123456012345613");
+		Board b = new Board("01011010232332324545545466666102");
 		NetworkMaster mnm = new NetworkMaster(b);
 //		mnm.communicateWithServer("012345601234560123456012345613");
 		mnm.minimaxCalc();
-		
+		b.display();
 	}
 }
