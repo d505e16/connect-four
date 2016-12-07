@@ -17,11 +17,11 @@ public class NetworkMaster extends DoubleRecurcive {
 	private PrintWriter orvalPrintWriter, chimayPrintWriter, westmallePrintWriter, tempPrintWriter;
 	private InputStreamReader orvalInputStreamReader, chimayInputStreamReader, westmalleInputStreamReader, tempInputStreamReader;
 	private BufferedReader orvalBufferedReader, chimayBufferedReader, westmalleBufferedReader, tempBufferedReader;
-	private ArrayList<String> terminalBoardStrings;
+	private ArrayList<Board> terminalBoardStrings;
 	
 	public NetworkMaster(Board b) {
 		super(b);
-		terminalBoardStrings = new ArrayList<String>();
+		terminalBoardStrings = new ArrayList<Board>();
 		connectSocket();
 	}
 	
@@ -99,14 +99,14 @@ public class NetworkMaster extends DoubleRecurcive {
 				} else {//test
 					//not terminal
 					terminalCounter += 1;
-					terminalBoardStrings.add(tempBoard.getBoardString()); 
+					terminalBoardStrings.add(tempBoard); 
 				}
 			}
 		}
 		
 		//distebuting threads i terminalThreadString list
 		if(terminalCounter > 0){
-			//3 er lidt magisk, skal lave et tjek på hvilket sockets der kører
+			//TODO 3 er lidt magisk, skal lave et tjek på hvilket sockets der kører
 			int numOfLocalThreads = terminalCounter % 3;
 			int numOfWorkerThreads = (terminalCounter-numOfLocalThreads) / 3;
 			
@@ -123,66 +123,27 @@ public class NetworkMaster extends DoubleRecurcive {
 			
 			
 			
-			//udilleger før - så kør egne tråde
+			//udelliger før - så kør egne tråde
 			for(int i = 0; i < terminalCounter; i++){
-//			for(String boardString : terminalBoardStrings){
 				// TODO skal laves om
 				if(i < numOfWorkerThreads * 1){
-					System.out.println("Thread" + i + "Orval starts..");
+					System.out.println("Thread " + i + " Orval starts..");
 					threadPool.execute(connectionThread(orvalPrintWriter, orvalBufferedReader, i));
-					System.out.println("Thread" + i + "Orval ends");
+					System.out.println("Thread " + i + " Orval ends");
 				} else if(i < numOfWorkerThreads * 2){
-					System.out.println("Thread" + i + "Chimay starts..");
+					System.out.println("Thread " + i + " Chimay starts..");
 					threadPool.execute(connectionThread(chimayPrintWriter, chimayBufferedReader, i));
-					System.out.println("Thread" + i + "Chimay ends");
-//					tempPrintWriter = chimayPrintWriter;
-//					tempBufferedReader = chimayBufferedReader;
+					System.out.println("Thread " + i + " Chimay ends");
 				} else if(i < numOfWorkerThreads * 3){
-					System.out.println("Thread" + i + "Westmalle starts..");
+					System.out.println("Thread " + i + " Westmalle starts..");
 					threadPool.execute(connectionThread(westmallePrintWriter, westmalleBufferedReader, i));
-					System.out.println("Thread" + i + "Westmalle ends");
-//					tempPrintWriter = westmallePrintWriter;
-//					tempBufferedReader = westmalleBufferedReader;
+					System.out.println("Thread " + i + " Westmalle ends");
 				} else{
-					//TODO run local
-				}
-				
-				int j = i; //i bliver ikke givet vidre til tråden
-
-				//TODO Tror jeg bliver nød til at lave en runnable class
-//				threadPool.execute(new Runnable() {
-//					public void run() {
-//						System.out.println("Thread " + j + " started...");
-//						try {
-//						System.out.println(j + ". in tryBlock");
-//						tempPrintWriter.println(terminalBoardStrings.get(j));//terminalBoardStrings.get(j));
-////						tempPrintWriter.println(tempBoard.getBoardString()); // write to localhost
-//						System.out.println("send");
-//						String recivedString = tempBufferedReader.readLine();
-//						System.out.println("read");
-////						double branchValue = Double.valueOf(recivedString);
-////						System.out.println("Min value for " + tempBoard.getBoardString() + " is: " + branchValue);
-//						
-//						//hvis der bliver sendt flere boards til samme worker, kan man ikke vide hvilken rækkefølge den kommer tilbage i:
-//						//Spliter recivedString 1220125461:-25 finder placeringen for :, (:-1) = col , (:+res)=value 
-//						//TODO evt. lav metode
-//						int indexOfColon = recivedString.indexOf(":");
-//						int col = Character.getNumericValue(recivedString.charAt(indexOfColon-1));
-//						double branchValue = Double.valueOf(recivedString.substring(indexOfColon+1));
-//						
-//						moves[col] = branchValue;
-//						
-//						System.out.println("Thread " + j + ": success");
-//						} catch (IOException e) {
-//							e.printStackTrace();
-//						} // from localhost
-//						System.out.println("Thread " + j + " Terminated!!!!");
-//					}
-//				}); 
-				
-				
+					System.out.println("Local thread " + i + " starts..");
+					threadPool.execute(localThread(i));
+					System.out.println("Local thread " + i + " ends");
+				}		
 			}	
-			
 			
 		}
 
@@ -233,7 +194,8 @@ public class NetworkMaster extends DoubleRecurcive {
 				System.out.println("Thread " + i + " started...");
 				try {
 				System.out.println(i + ". in tryBlock");
-				aPrintWriter.println(terminalBoardStrings.get(i));
+				//finder board og sender dets boradString vidre.
+				aPrintWriter.println(terminalBoardStrings.get(i).getBoardString());
 				System.out.println("send");
 				String recivedString = aBufferedReader.readLine();
 				System.out.println("read");
@@ -252,7 +214,21 @@ public class NetworkMaster extends DoubleRecurcive {
 				System.out.println("Thread " + i + " Terminated!!!!");
 			} 
 	    };
-
+	    return aRunnable;
+	}
+	
+	//TODO skal msåke laves oppe ved terminal tjekket..
+	private Runnable localThread(int i){
+	    Runnable aRunnable = new Runnable(){
+	    	public void run() {
+				System.out.println("Local thread " + i + " started...");
+				
+				//TODO skal måske finde index i stringen som ved de andre
+				moves[i] = miniCalc(terminalBoardStrings.get(i), DEPTH + 1);
+		
+				System.out.println("Local thread " + i + " Terminated!!!!");
+			} 
+	    };
 	    return aRunnable;
 	}
 	
