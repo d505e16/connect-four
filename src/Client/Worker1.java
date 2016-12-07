@@ -1,3 +1,5 @@
+package Client;
+
 import Minimax.Board;
 import Minimax.DoubleRecurcive;
 

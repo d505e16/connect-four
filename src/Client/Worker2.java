@@ -1,15 +1,17 @@
+package Client;
+
 import Minimax.Board;
 import Minimax.DoubleRecurcive;
 
 import java.io.*;
 import java.net.*;
 
-public class Worker {
+public class Worker2 {
     public static void main(String[] args) {
         System.out.println("server ... ");
         try {
             System.out.println("hello");
-            ServerSocket serverSocket = new ServerSocket(4444);
+            ServerSocket serverSocket = new ServerSocket(4446);
 
             InputStreamReader inputStreamReader; 
             BufferedReader bufferedReader;
