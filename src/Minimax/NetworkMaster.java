@@ -10,6 +10,8 @@ import java.util.ArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import javafx.concurrent.Worker;
+
 public class NetworkMaster extends DoubleRecurcive {
 	public Socket orvalSocket, chimaySocket, westmalleSocket, tempSocket;
 	private PrintWriter orvalPrintWriter, chimayPrintWriter, westmallePrintWriter, tempPrintWriter;
@@ -78,23 +80,6 @@ public class NetworkMaster extends DoubleRecurcive {
 //		}
 //	}
 	
-//	private void connectLocal(){
-//		try {// lav sockets til servere! - alle tre
-//			localSocket = new Socket("localhost", 4444);
-//			
-//			localPrintWriter = new PrintWriter(localSocket.getOutputStream(), true);
-//			
-//			localInputStreamReader = new InputStreamReader(localSocket.getInputStream());
-//			localBufferedReader = new BufferedReader(localInputStreamReader);
-//			
-//			
-//		} catch (UnknownHostException e) {
-//			e.printStackTrace();
-//		} catch (IOException e) {
-//			e.printStackTrace();
-//		}
-//	}
-	
 	public void minimaxCalc(){
 		
 		ExecutorService threadPool = Executors.newCachedThreadPool();
@@ -114,40 +99,10 @@ public class NetworkMaster extends DoubleRecurcive {
 				} else {//test
 					//not terminal
 					terminalCounter += 1;
-					terminalBoardStrings.add(tempBoard.getBoardString());
-					
-//					threadPool.execute(new Runnable() {
-//						public void run() {
-//							System.out.println("Thread " + j + " started...");
-//							try {
-//							printWriter.println(tempBoard.getBoardString()); // write to localhost
-//							System.out.println("send");
-//							String recivedString = bufferedReader.readLine();
-//							System.out.println("read");
-////							double branchValue = Double.valueOf(recivedString);
-////							System.out.println("Min value for " + tempBoard.getBoardString() + " is: " + branchValue);
-//							
-//							//Spliter recivedString 1220125461:-25 finder placeringen for :, (:-1) = col , (:+res)=value 
-//							//TODO lav metode
-//							int indexOfColon = recivedString.indexOf(":");
-//							int col = Character.getNumericValue(recivedString.charAt(indexOfColon-1));
-//							double branchValue = Double.valueOf(recivedString.substring(indexOfColon+1));
-//							
-//							moves[col] = branchValue;
-//							
-//							System.out.println("Thread " + j + ": success");
-//							} catch (IOException e) {
-//								e.printStackTrace();
-//							} // from localhost
-//							System.out.println("Thread " + j + " Terminated!!!!!");
-//						}
-//					});  
-					
+					terminalBoardStrings.add(tempBoard.getBoardString()); 
 				}
 			}
 		}
-		
-		terminalBoardStrings.toString();
 		
 		//distebuting threads i terminalThreadString list
 		if(terminalCounter > 0){
@@ -155,62 +110,82 @@ public class NetworkMaster extends DoubleRecurcive {
 			int numOfLocalThreads = terminalCounter % 3;
 			int numOfWorkerThreads = (terminalCounter-numOfLocalThreads) / 3;
 			
+			/*
+			 *	1 terminal  = kør lokalt
+			 *  2 terminale = kør 1 lokal + 1 worker
+			 *  3 terminale = kør 1 lokal + 1 på 2 worker
+			 *  4 terminale = kør 1 lokal + 1 på 3 worker
+			 *  
+			 *  5 terminale = kør 1 lokal + 1 på 2 worker + 2 på 1 worker
+			 *  6 terminale = kør 1 lokal + 1 på 1 worker + 2 på 2 worker
+			 *  7 terminale = kør 1 lokal + 2 på 3 worker
+			 * */
+			
+			
+			
 			//udilleger før - så kør egne tråde
 			for(int i = 0; i < terminalCounter; i++){
 //			for(String boardString : terminalBoardStrings){
 				// TODO skal laves om
 				if(i < numOfWorkerThreads * 1){
-					tempPrintWriter = orvalPrintWriter;
-					tempBufferedReader = orvalBufferedReader;
+					System.out.println("Thread" + i + "Orval starts..");
+					threadPool.execute(connectionThread(orvalPrintWriter, orvalBufferedReader, i));
+					System.out.println("Thread" + i + "Orval ends");
 				} else if(i < numOfWorkerThreads * 2){
-					tempPrintWriter = chimayPrintWriter;
-					tempBufferedReader = chimayBufferedReader;
+					System.out.println("Thread" + i + "Chimay starts..");
+					threadPool.execute(connectionThread(chimayPrintWriter, chimayBufferedReader, i));
+					System.out.println("Thread" + i + "Chimay ends");
+//					tempPrintWriter = chimayPrintWriter;
+//					tempBufferedReader = chimayBufferedReader;
 				} else if(i < numOfWorkerThreads * 3){
-					tempPrintWriter = westmallePrintWriter;
-					tempBufferedReader = westmalleBufferedReader;
+					System.out.println("Thread" + i + "Westmalle starts..");
+					threadPool.execute(connectionThread(westmallePrintWriter, westmalleBufferedReader, i));
+					System.out.println("Thread" + i + "Westmalle ends");
+//					tempPrintWriter = westmallePrintWriter;
+//					tempBufferedReader = westmalleBufferedReader;
 				} else{
 					//TODO run local
 				}
 				
 				int j = i; //i bliver ikke givet vidre til tråden
 
-				
-				threadPool.execute(new Runnable() {
-					public void run() {
-						System.out.println("Thread " + j + " started...");
-						try {
-						System.out.println(j + ". in tryBlock");
-						orvalPrintWriter.println(terminalBoardStrings.get(j));//terminalBoardStrings.get(j));
-//						tempPrintWriter.println(tempBoard.getBoardString()); // write to localhost
-						System.out.println("send");
-						String recivedString = orvalBufferedReader.readLine();
-						System.out.println("read");
-//						double branchValue = Double.valueOf(recivedString);
-//						System.out.println("Min value for " + tempBoard.getBoardString() + " is: " + branchValue);
-						
-						//hvis der bliver sendt flere boards til samme worker, kan man ikke vide hvilken rækkefølge den kommer tilbage i:
-						//Spliter recivedString 1220125461:-25 finder placeringen for :, (:-1) = col , (:+res)=value 
-						//TODO lav metode
-						int indexOfColon = recivedString.indexOf(":");
-						int col = Character.getNumericValue(recivedString.charAt(indexOfColon-1));
-						double branchValue = Double.valueOf(recivedString.substring(indexOfColon+1));
-						
-						moves[col] = branchValue;
-						
-						System.out.println("Thread " + j + ": success");
-						} catch (IOException e) {
-							e.printStackTrace();
-						} // from localhost
-						System.out.println("Thread " + j + " Terminated!!!!");
-					}
-				}); 
+				//TODO Tror jeg bliver nød til at lave en runnable class
+//				threadPool.execute(new Runnable() {
+//					public void run() {
+//						System.out.println("Thread " + j + " started...");
+//						try {
+//						System.out.println(j + ". in tryBlock");
+//						tempPrintWriter.println(terminalBoardStrings.get(j));//terminalBoardStrings.get(j));
+////						tempPrintWriter.println(tempBoard.getBoardString()); // write to localhost
+//						System.out.println("send");
+//						String recivedString = tempBufferedReader.readLine();
+//						System.out.println("read");
+////						double branchValue = Double.valueOf(recivedString);
+////						System.out.println("Min value for " + tempBoard.getBoardString() + " is: " + branchValue);
+//						
+//						//hvis der bliver sendt flere boards til samme worker, kan man ikke vide hvilken rækkefølge den kommer tilbage i:
+//						//Spliter recivedString 1220125461:-25 finder placeringen for :, (:-1) = col , (:+res)=value 
+//						//TODO evt. lav metode
+//						int indexOfColon = recivedString.indexOf(":");
+//						int col = Character.getNumericValue(recivedString.charAt(indexOfColon-1));
+//						double branchValue = Double.valueOf(recivedString.substring(indexOfColon+1));
+//						
+//						moves[col] = branchValue;
+//						
+//						System.out.println("Thread " + j + ": success");
+//						} catch (IOException e) {
+//							e.printStackTrace();
+//						} // from localhost
+//						System.out.println("Thread " + j + " Terminated!!!!");
+//					}
+//				}); 
 				
 				
 			}	
 			
 			
 		}
-		
+
 
 		threadPool.shutdown();
 		
@@ -251,7 +226,35 @@ public class NetworkMaster extends DoubleRecurcive {
 		
 		System.out.println("Best move is in col " + bestCol);
 	}
+	
+	private Runnable connectionThread(PrintWriter aPrintWriter, BufferedReader aBufferedReader, int i){
+	    Runnable aRunnable = new Runnable(){
+	    	public void run() {
+				System.out.println("Thread " + i + " started...");
+				try {
+				System.out.println(i + ". in tryBlock");
+				aPrintWriter.println(terminalBoardStrings.get(i));
+				System.out.println("send");
+				String recivedString = aBufferedReader.readLine();
+				System.out.println("read");
+				
+				//TODO evt. lav metode
+				int indexOfColon = recivedString.indexOf(":");
+				int col = Character.getNumericValue(recivedString.charAt(indexOfColon-1));
+				double branchValue = Double.valueOf(recivedString.substring(indexOfColon+1));
+				
+				moves[col] = branchValue;
+				
+				System.out.println("Thread " + i + ": success");
+				} catch (IOException e) {
+					e.printStackTrace();
+				} 
+				System.out.println("Thread " + i + " Terminated!!!!");
+			} 
+	    };
 
+	    return aRunnable;
+	}
 	
 	public static void main(String args[]) {
 		Board b = new Board("01011010232332324545545466666102");
