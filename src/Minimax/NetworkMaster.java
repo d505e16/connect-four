@@ -7,78 +7,34 @@ import java.io.PrintWriter;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import javafx.concurrent.Worker;
 
 public class NetworkMaster extends DoubleRecurcive {
-	public Socket orvalSocket, chimaySocket, westmalleSocket, tempSocket;
-	private PrintWriter orvalPrintWriter, chimayPrintWriter, westmallePrintWriter, tempPrintWriter;
-	private InputStreamReader orvalInputStreamReader, chimayInputStreamReader, westmalleInputStreamReader, tempInputStreamReader;
-	private BufferedReader orvalBufferedReader, chimayBufferedReader, westmalleBufferedReader, tempBufferedReader;
-	private ArrayList<Board> terminalBoardStrings;
+	private ArrayList<Board> notTerminalBoardList;
+	private ArrayList<Connection> connectionList;
 	
 	public NetworkMaster(Board b) {
 		super(b);
-		terminalBoardStrings = new ArrayList<Board>();
-		connectSocket();
+		connectionList = new ArrayList<Connection>();
 	}
 	
-	private void connectSocket(){
-		//TODO skal ændres til rigtige adresser 
-		try {
-			//orval - fakeit
-			orvalSocket = new Socket("localhost", 4444);
-			
-			orvalPrintWriter = new PrintWriter(orvalSocket.getOutputStream(), true);
-			
-			orvalInputStreamReader = new InputStreamReader(orvalSocket.getInputStream());
-			orvalBufferedReader = new BufferedReader(orvalInputStreamReader);
-			
-			//chimay - fakeit
-			chimaySocket = new Socket("localhost", 4445);
-			
-			chimayPrintWriter = new PrintWriter(chimaySocket.getOutputStream(), true);
-			
-			chimayInputStreamReader = new InputStreamReader(chimaySocket.getInputStream());
-			chimayBufferedReader = new BufferedReader(chimayInputStreamReader);
-			
-			//westmalle - fakeit
-			westmalleSocket = new Socket("localhost", 4446);
-			
-			westmallePrintWriter = new PrintWriter(westmalleSocket.getOutputStream(), true);
-			
-			westmalleInputStreamReader = new InputStreamReader(westmalleSocket.getInputStream());
-			westmalleBufferedReader = new BufferedReader(westmalleInputStreamReader);
-			
-			
-			
-		} catch (UnknownHostException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-//		connectSocket(orvalSocket, "localhost", 4444, orvalPrintWriter, orvalInputStreamReader, orvalBufferedReader);
-//		connectSocket(chimaySocket, "localhost", 4445, chimayPrintWriter, chimayInputStreamReader, chimayBufferedReader);
-//		connectSocket(westmalleSocket, "localhost", 4446, westmallePrintWriter, westmalleInputStreamReader, westmalleBufferedReader);
+	public NetworkMaster(Board b, String[] args){
+		super(b);
+		notTerminalBoardList = new ArrayList<Board>();
+		connectionList = new ArrayList<Connection>();
+		getWorkers(args);
 	}
 	
-//	private void connectSocket(Socket aSocket, String name, int port, PrintWriter out, InputStreamReader in, BufferedReader buff){
-//		try {
-//			aSocket = new Socket(name, port);
-//			
-//			out = new PrintWriter(aSocket.getOutputStream(), true);
-//			
-//			in = new InputStreamReader(aSocket.getInputStream());
-//			buff = new BufferedReader(in);
-//			
-//		} catch (UnknownHostException e) {
-//			e.printStackTrace();
-//		} catch (IOException e) {
-//			e.printStackTrace();
-//		}
-//	}
+	private void getWorkers(String[] args) {
+        for (String arg : args) {
+            String[] parts = arg.split(":");
+            Connection aConnection = new Connection(parts[0], parts[1]);
+            connectionList.add(aConnection);
+        }
+    }
 	
 	public void minimaxCalc(){
 		
@@ -99,7 +55,7 @@ public class NetworkMaster extends DoubleRecurcive {
 				} else {//test
 					//not terminal
 					terminalCounter += 1;
-					terminalBoardStrings.add(tempBoard); 
+					notTerminalBoardList.add(tempBoard); 
 				}
 			}
 		}
@@ -108,42 +64,26 @@ public class NetworkMaster extends DoubleRecurcive {
 		if(terminalCounter > 0){
 			//TODO 3 er lidt magisk, skal lave et tjek på hvilket sockets der kører
 			int numOfLocalThreads = terminalCounter % 3;
-			int numOfWorkerThreads = (terminalCounter-numOfLocalThreads) / 3;
+			int numOfWorkerThreads = (terminalCounter-numOfLocalThreads) / 3;	
 			
-			/*
-			 *	1 terminal  = kør lokalt
-			 *  2 terminale = kør 1 lokal + 1 worker
-			 *  3 terminale = kør 1 lokal + 1 på 2 worker
-			 *  4 terminale = kør 1 lokal + 1 på 3 worker
-			 *  
-			 *  5 terminale = kør 1 lokal + 1 på 2 worker + 2 på 1 worker
-			 *  6 terminale = kør 1 lokal + 1 på 1 worker + 2 på 2 worker
-			 *  7 terminale = kør 1 lokal + 2 på 3 worker
-			 * */
+			int nextConnection = 0;
 			
-			
-			
-			//udelliger før - så kør egne tråde
-			for(int i = 0; i < terminalCounter; i++){
-				// TODO skal laves om
-				if(i < numOfWorkerThreads * 1){
-					System.out.println("Thread " + i + " Orval starts..");
-					threadPool.execute(connectionThread(orvalPrintWriter, orvalBufferedReader, i));
-					System.out.println("Thread " + i + " Orval ends");
-				} else if(i < numOfWorkerThreads * 2){
-					System.out.println("Thread " + i + " Chimay starts..");
-					threadPool.execute(connectionThread(chimayPrintWriter, chimayBufferedReader, i));
-					System.out.println("Thread " + i + " Chimay ends");
-				} else if(i < numOfWorkerThreads * 3){
-					System.out.println("Thread " + i + " Westmalle starts..");
-					threadPool.execute(connectionThread(westmallePrintWriter, westmalleBufferedReader, i));
-					System.out.println("Thread " + i + " Westmalle ends");
-				} else{
-					System.out.println("Local thread " + i + " starts..");
+			for(int i = 0; i < notTerminalBoardList.size(); i++){
+				if(i == 0){
 					threadPool.execute(localThread(i));
-					System.out.println("Local thread " + i + " ends");
-				}		
+				} else {
+					System.out.println("Thread "  + i + " at connection " + nextConnection + " starts..");
+					threadPool.execute(connectionThread(connectionList.get(nextConnection).getPrintWriter(), connectionList.get(nextConnection).getBufferedReader(), i));
+					System.out.println("Thread "  + i + " at connection " + nextConnection + " enden!");
+					if(nextConnection == connectionList.size() - 1){
+						nextConnection = 0;
+					} else {
+						nextConnection++;
+					}
+				}
 			}	
+
+			
 			
 		}
 
@@ -152,9 +92,9 @@ public class NetworkMaster extends DoubleRecurcive {
 		
 		while(!threadPool.isTerminated()){}//blocker til stringene er færdige med at køre!
 		try {
-			orvalSocket.close();
-			chimaySocket.close();
-			westmalleSocket.close();
+			for(Connection connection: connectionList){
+				connection.getSocket().close();
+			}
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -195,7 +135,7 @@ public class NetworkMaster extends DoubleRecurcive {
 				try {
 				System.out.println(i + ". in tryBlock");
 				//finder board og sender dets boradString vidre.
-				aPrintWriter.println(terminalBoardStrings.get(i).getBoardString());
+				aPrintWriter.println(notTerminalBoardList.get(i).getBoardString());
 				System.out.println("send");
 				String recivedString = aBufferedReader.readLine();
 				System.out.println("read");
@@ -224,7 +164,7 @@ public class NetworkMaster extends DoubleRecurcive {
 				System.out.println("Local thread " + i + " started...");
 				
 				//TODO skal måske finde index i stringen som ved de andre
-				moves[i] = miniCalc(terminalBoardStrings.get(i), DEPTH + 1);
+				moves[i] = miniCalc(notTerminalBoardList.get(i), DEPTH + 1);
 		
 				System.out.println("Local thread " + i + " Terminated!!!!");
 			} 
@@ -234,9 +174,10 @@ public class NetworkMaster extends DoubleRecurcive {
 	
 	public static void main(String args[]) {
 		Board b = new Board("01011010232332324545545466666102");
-		NetworkMaster mnm = new NetworkMaster(b);
-//		mnm.communicateWithServer("012345601234560123456012345613");
-		mnm.minimaxCalc();
+//		NetworkMaster mnm = new NetworkMaster(b);
+		NetworkMaster mnmArgs = new NetworkMaster(b, args);
+//		mnm.minimaxCalc();
+		mnmArgs.minimaxCalc();
 		b.display();
 	}
 }
