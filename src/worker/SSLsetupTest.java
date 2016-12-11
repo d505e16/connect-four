@@ -1,10 +1,10 @@
-package Worker;
+package worker;
 
 import javax.net.ssl.SSLServerSocketFactory;
 import java.io.IOException;
 import java.net.ServerSocket;
 
-public class Main {
+public class SSLsetupTest {
     public static void main(String[] args) throws IOException {
         System.setProperty("javax.net.ssl.keyStore", "cf.store");
         System.setProperty("javax.net.ssl.keyStorePassword", "d505e16");
@@ -12,8 +12,5 @@ public class Main {
 
         System.out.println("Ready for work!");
 
-        while (true) {
-            new Thread(serverSocket.accept()).start();
-        }
     }
 }

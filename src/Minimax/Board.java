@@ -176,11 +176,11 @@ public class Board {
         return connectedTiles >= 4;
     }//end diagonalRightToLeft
 
-    Boolean isBoardFull() {
+    public Boolean isBoardFull() {
         return BOARD_STRING.length() == (this.COL * this.ROW);
     }
 
-    void display() {
+    public void display() {
         for (Character[] aBoard : this.board) {
             for (Character anABoard : aBoard) {
                 System.out.print(anABoard + "\t");

@@ -1,9 +1,10 @@
-package Minimax;
+package master;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.net.ConnectException;
 import java.net.Socket;
 import java.net.UnknownHostException;
 
@@ -15,19 +16,14 @@ public class Connection {
 	private int port;
 	private String adress;
 	
-	public Connection(String anAdress, String aPort) {
+	public Connection(String anAdress, String aPort) throws UnknownHostException, IOException {
 		this.adress = anAdress;
 		this.port = Integer.valueOf(aPort);
-		try {
-			socket = new Socket(adress, port);
-			printWriter = new PrintWriter(socket.getOutputStream(), true);
-			inputStreamReader = new InputStreamReader(socket.getInputStream());
-			bufferedReader = new BufferedReader(inputStreamReader);
-		} catch (UnknownHostException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+
+		socket = new Socket(adress, port);
+		printWriter = new PrintWriter(socket.getOutputStream(), true);
+		inputStreamReader = new InputStreamReader(socket.getInputStream());
+		bufferedReader = new BufferedReader(inputStreamReader);
 	}
 	
 	public Socket getSocket() {

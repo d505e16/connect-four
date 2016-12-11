@@ -1,47 +1,67 @@
-package Minimax;
+package master;
 
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.PrintWriter;
-import java.net.Socket;
+import java.net.ConnectException;
+import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Date;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+
+import Minimax.Board;
+import Minimax.MinimaxSingleThread;
 
 
-public class NetworkMaster extends DoubleRecurcive {
+public class MasterMain extends MinimaxSingleThread {
 	private ArrayList<Board> notTerminalBoardList;
 	private ArrayList<Connection> connectionList;
 	
-	public NetworkMaster(Board b) {
+//	int nextConnection = 0; //TODO check for race conditions
+	
+	public MasterMain(Board b) {
 		super(b);
 		connectionList = new ArrayList<Connection>();
 	}
 	
-	public NetworkMaster(Board b, String[] args){
+	public MasterMain(Board b, String[] args){
 		super(b);
 		notTerminalBoardList = new ArrayList<Board>();
 		connectionList = new ArrayList<Connection>();
 		getWorkers(args);
 	}
 	
+	//TODO hvis connectionList er tom, bare kør MinimaxMultiThread
+	
 	private void getWorkers(String[] args) {
         for (String arg : args) {
             String[] parts = arg.split(":");
-            Connection aConnection = new Connection(parts[0], parts[1]);
-            connectionList.add(aConnection);
+            Connection aConnection = null;
+			
+			try {
+				aConnection = new Connection(parts[0], parts[1]);
+			} catch (UnknownHostException e) {
+				System.out.println("The connection to '" + parts[0] + "': " + parts[1] + " failed and has been omitted");
+			} catch (ConnectException e) {
+				System.out.println("The connection to '" + parts[0] + "': " + parts[1] + " failed and has been omitted");
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+            
+			if(aConnection != null){
+				connectionList.add(aConnection);
+			}
         }
+        System.out.println("args: " + args.length);        
+        System.out.println("connectionList.size: " + connectionList.size());
     }
 	
 	public void minimaxCalc(){
 		
 		ExecutorService threadPool = Executors.newCachedThreadPool();
-		int terminalCounter = 0;
-		
-		
 		for(int i = 0; i < COL; i++){
 			int row = board.firstEmptyInCol(i);
 			if(row != -1){  // når row er -1 hvis rækken er fuld
@@ -53,40 +73,12 @@ public class NetworkMaster extends DoubleRecurcive {
 				} else if(tempBoard.isBoardFull()) {//tie - behøver ikke cutoff i noden 
 					moves[i] = 0;
 				} else {//test
-					//not terminal
-					terminalCounter += 1;
 					notTerminalBoardList.add(tempBoard); 
 				}
 			}
 		}
 		
-		//distebuting threads i terminalThreadString list
-		if(terminalCounter > 0){
-			//TODO 3 er lidt magisk, skal lave et tjek på hvilket sockets der kører
-			int numOfLocalThreads = terminalCounter % 3;
-			int numOfWorkerThreads = (terminalCounter-numOfLocalThreads) / 3;	
-			
-			int nextConnection = 0;
-			
-			for(int i = 0; i < notTerminalBoardList.size(); i++){
-				if(i == 0){
-					threadPool.execute(localThread(i));
-				} else {
-					System.out.println("Thread "  + i + " at connection " + nextConnection + " starts..");
-					threadPool.execute(connectionThread(connectionList.get(nextConnection).getPrintWriter(), connectionList.get(nextConnection).getBufferedReader(), i));
-					System.out.println("Thread "  + i + " at connection " + nextConnection + " enden!");
-					if(nextConnection == connectionList.size() - 1){
-						nextConnection = 0;
-					} else {
-						nextConnection++;
-					}
-				}
-			}	
-
-			
-			
-		}
-
+		distabuteNotTerminalString(threadPool);
 
 		threadPool.shutdown();
 		
@@ -128,16 +120,34 @@ public class NetworkMaster extends DoubleRecurcive {
 		System.out.println("Best move is in col " + bestCol);
 	}
 	
-	private Runnable connectionThread(PrintWriter aPrintWriter, BufferedReader aBufferedReader, int i){
-	    Runnable aRunnable = new Runnable(){
+	private void distabuteNotTerminalString(ExecutorService aThreadPool){
+		int nextConnection = 0;
+		for(int i = 0; i < notTerminalBoardList.size(); i++){
+			Board tempBoard = notTerminalBoardList.get(i);
+			if(nextConnection == connectionList.size()){
+				System.out.println("Thread "  + i + " local starts..");
+				aThreadPool.execute(localThread(tempBoard, i));
+				System.out.println("Thread "  + i + " local ends");
+				nextConnection = 0;
+			} else {
+				System.out.println("Thread "  + i + " at connection " + nextConnection + " starts..");
+				aThreadPool.execute(connectionThread(connectionList.get(nextConnection), tempBoard, i));
+				System.out.println("Thread "  + i + " at connection " + nextConnection + " enden!");
+				nextConnection++;
+			}
+		}	
+	}
+	
+	private Runnable connectionThread(Connection aConnection, Board aBoard, int i){
+		Runnable aRunnable = new Runnable(){
 	    	public void run() {
 				System.out.println("Thread " + i + " started...");
 				try {
 				System.out.println(i + ". in tryBlock");
 				//finder board og sender dets boradString vidre.
-				aPrintWriter.println(notTerminalBoardList.get(i).getBoardString());
+				aConnection.getPrintWriter().println(aBoard.getBoardString());
 				System.out.println("send");
-				String recivedString = aBufferedReader.readLine();
+				String recivedString = aConnection.getBufferedReader().readLine();
 				System.out.println("read");
 				
 				//TODO evt. lav metode
@@ -148,6 +158,17 @@ public class NetworkMaster extends DoubleRecurcive {
 				moves[col] = branchValue;
 				
 				System.out.println("Thread " + i + ": success");
+				} catch (SocketException e) {
+					System.out.println("Socket connection lost");
+					if(connectionList.contains(aConnection)){
+						System.out.println("connectionList.size before: " + connectionList.size());
+						connectionList.remove(aConnection);
+						System.out.println("connectionList.size after: " + connectionList.size());
+					}
+					System.out.println("Just running it locally!");
+					String boardString = aBoard.getBoardString();
+					int col = Character.getNumericValue(boardString.charAt(boardString.length()-1));
+					moves[col] = miniCalc(aBoard, DEPTH + 1);
 				} catch (IOException e) {
 					e.printStackTrace();
 				} 
@@ -157,15 +178,14 @@ public class NetworkMaster extends DoubleRecurcive {
 	    return aRunnable;
 	}
 	
-	//TODO skal msåke laves oppe ved terminal tjekket..
-	private Runnable localThread(int i){
+	private Runnable localThread(Board aBoard, int i){
 	    Runnable aRunnable = new Runnable(){
 	    	public void run() {
 				System.out.println("Local thread " + i + " started...");
+				String boardString = aBoard.getBoardString();
+				int col = Character.getNumericValue(boardString.charAt(boardString.length()-1));
+				moves[col] = miniCalc(aBoard, DEPTH + 1);
 				
-				//TODO skal måske finde index i stringen som ved de andre
-				moves[i] = miniCalc(notTerminalBoardList.get(i), DEPTH + 1);
-		
 				System.out.println("Local thread " + i + " Terminated!!!!");
 			} 
 	    };
@@ -173,11 +193,19 @@ public class NetworkMaster extends DoubleRecurcive {
 	}
 	
 	public static void main(String args[]) {
-		Board b = new Board("01011010232332324545545466666102");
+		long startTime, endTime;
+        Date date = new Date();
+        startTime = date.getTime();
+		
+        Board b = new Board("01011010232332324545545466666");
 //		NetworkMaster mnm = new NetworkMaster(b);
-		NetworkMaster mnmArgs = new NetworkMaster(b, args);
+		MasterMain mnmArgs = new MasterMain(b, args);
 //		mnm.minimaxCalc();
 		mnmArgs.minimaxCalc();
 		b.display();
+		
+		Date date1 = new Date();
+        endTime = date1.getTime();
+        System.out.println("time used in ms" + (endTime - startTime));
 	}
 }

@@ -3,9 +3,9 @@ package Minimax;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public class DoubleRecurciveParallel extends DoubleRecurcive {
+public class MinimaxMultiThread extends MinimaxSingleThread {
 
-    public DoubleRecurciveParallel(Board b) {
+    public MinimaxMultiThread(Board b) {
         super(b);
 //		minimaxCalc();
     }

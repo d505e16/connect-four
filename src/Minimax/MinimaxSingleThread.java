@@ -1,13 +1,13 @@
 package Minimax;
 
-public class DoubleRecurcive {
+public class MinimaxSingleThread {
 	protected final int COL, DEPTH, ROW, MAX_DEPTH;
 	protected final Character PLAYER;
 	protected Board board;
 	protected double[] moves;
 	private double returnValue;
 	
-	public DoubleRecurcive(Board b) {
+	public MinimaxSingleThread(Board b) {
 		this.board = b;
 		this.ROW = b.getRow();
 		this.COL = b.getCol();	
