@@ -61,9 +61,9 @@ public class MasterMain {
 			try {
 				aConnection = new Connection(parts[0], parts[1]);
 			} catch (UnknownHostException e) {
-				System.out.println("The connection to " + args + " failed and has been omitted");
+				System.out.println("The connection to " + parts[0] + ":" + parts[1] + " failed and has been omitted"); //skal ikke ændres til args, så skriver den bare ref
 			} catch (ConnectException e) {
-				System.out.println("The connection to " + args + " failed and has been omitted");
+				System.out.println("The connection to " + parts[0] + ":" + parts[1] + " failed and has been omitted"); //skal ikke ændres til args, så skriver den bare ref
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
