@@ -12,31 +12,48 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-import Minimax.Board;
-import Minimax.MinimaxSingleThread;
+import minimax.Board;
+import minimax.Board;
 
+public class MasterMain {
+	public static ArrayList<Board> notTerminalBoardList = new ArrayList<Board>();
+	private static ArrayList<Connection> connectionList = new ArrayList<Connection>();
+	private static double[] moves = new double[7];
+	
+	public static void main(String[] args) {
+		long startTime, endTime;
+		Date date = new Date();
+		startTime = date.getTime();
+		
+		ExecutorService threadPool = Executors.newCachedThreadPool();
 
-public class MasterMain extends MinimaxSingleThread {
-	private ArrayList<Board> notTerminalBoardList;
-	private ArrayList<Connection> connectionList;
-	
-//	int nextConnection = 0; //TODO check for race conditions
-	
-	public MasterMain(Board b) {
-		super(b);
-		connectionList = new ArrayList<Connection>();
-	}
-	
-	public MasterMain(Board b, String[] args){
-		super(b);
-		notTerminalBoardList = new ArrayList<Board>();
-		connectionList = new ArrayList<Connection>();
 		getWorkers(args);
+		Board board = new Board("0101101023233232454554546666610"); // skal hentes far input
+		
+//		board.minimaxCalc(false);
+		board.minimaxCalc(false, true);
+		
+		distabuteNotTerminalString(threadPool);
+		
+		threadPool.shutdown();
+        while (!threadPool.isTerminated()) {}
+		
+		System.out.println("notTerminalBoardList.size: " + notTerminalBoardList.size());
+		
+		System.out.print("(");
+		for(int i = 0; i < moves.length; i++){
+			System.out.print(moves[i] + ", ");
+		}
+		System.out.println(")");
+		
+		board.display();
+        System.out.println("\nWe are " + board.getNextTurn() + "\n");
+        Date date1 = new Date();
+        endTime = date1.getTime();
+        System.out.println("time used in ms" + (endTime - startTime));
 	}
 	
-	//TODO hvis connectionList er tom, bare kør MinimaxMultiThread
-	
-	private void getWorkers(String[] args) {
+	private static void getWorkers(String[] args) {
         for (String arg : args) {
             String[] parts = arg.split(":");
             Connection aConnection = null;
@@ -44,9 +61,9 @@ public class MasterMain extends MinimaxSingleThread {
 			try {
 				aConnection = new Connection(parts[0], parts[1]);
 			} catch (UnknownHostException e) {
-				System.out.println("The connection to '" + parts[0] + "': " + parts[1] + " failed and has been omitted");
+				System.out.println("The connection to " + args + " failed and has been omitted");
 			} catch (ConnectException e) {
-				System.out.println("The connection to '" + parts[0] + "': " + parts[1] + " failed and has been omitted");
+				System.out.println("The connection to " + args + " failed and has been omitted");
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -55,97 +72,34 @@ public class MasterMain extends MinimaxSingleThread {
 				connectionList.add(aConnection);
 			}
         }
-        System.out.println("args: " + args.length);        
-        System.out.println("connectionList.size: " + connectionList.size());
     }
 	
-	public void minimaxCalc(){
-		
-		ExecutorService threadPool = Executors.newCachedThreadPool();
-		for(int i = 0; i < COL; i++){
-			int row = board.firstEmptyInCol(i);
-			if(row != -1){  // når row er -1 hvis rækken er fuld
-				Board tempBoard = new Board(this.board.getBoardString().concat(String.valueOf(i)));
-				if(tempBoard.isTerminal(row, i)){ 
-					//terminal
-					//System.out.println(tempBoard.getBoardString() + " is terminal ");
-					moves[i] = terminalValue(tempBoard);
-				} else if(tempBoard.isBoardFull()) {//tie - behøver ikke cutoff i noden 
-					moves[i] = 0;
-				} else {//test
-					notTerminalBoardList.add(tempBoard); 
-				}
-			}
-		}
-		
-		distabuteNotTerminalString(threadPool);
-
-		threadPool.shutdown();
-		
-		while(!threadPool.isTerminated()){}//blocker til stringene er færdige med at køre!
-		try {
-			for(Connection connection: connectionList){
-				connection.getSocket().close();
-			}
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		
-		//print
-		System.out.print("(");
-		for(int i = 0; i < COL; i++){
-			System.out.print(moves[i] + ", ");
-		}
-		System.out.println(")");
-		
-		//selection
-		double best = -1001;
-		int bestCol = -1;
-
-		for(int i = 0; i < COL; i++){
-			if(moves[i] == 75){
-				System.out.println("Zugzwang if placing i col: " + i);
-			} else if(moves[i] == -100){
-				System.out.println("Opponent wil get Zugzwang if not placed i col: " + i);
-			} 
-		}
-		for(int i = 0; i < COL; i++){	
-			if(moves[i] >= best && moves[i] != 0){ // missing ground rules - center first
-				best = moves[i];
-				System.out.println("new the best is: " + best);
-				bestCol = i;
-			}
-		}
-		
-		System.out.println("Best move is in col " + bestCol);
-	}
-	
-	private void distabuteNotTerminalString(ExecutorService aThreadPool){
+	private static void distabuteNotTerminalString(ExecutorService threadPool){
 		int nextConnection = 0;
 		for(int i = 0; i < notTerminalBoardList.size(); i++){
 			Board tempBoard = notTerminalBoardList.get(i);
 			if(nextConnection == connectionList.size()){
 				System.out.println("Thread "  + i + " local starts..");
-				aThreadPool.execute(localThread(tempBoard, i));
+				threadPool.execute(localThread(tempBoard, i));
 				System.out.println("Thread "  + i + " local ends");
 				nextConnection = 0;
 			} else {
 				System.out.println("Thread "  + i + " at connection " + nextConnection + " starts..");
-				aThreadPool.execute(connectionThread(connectionList.get(nextConnection), tempBoard, i));
+				threadPool.execute(connectionThread(connectionList.get(nextConnection), tempBoard, i));
 				System.out.println("Thread "  + i + " at connection " + nextConnection + " enden!");
 				nextConnection++;
 			}
 		}	
 	}
 	
-	private Runnable connectionThread(Connection aConnection, Board aBoard, int i){
+	private static Runnable connectionThread(Connection aConnection, Board tempBoard, int i){
 		Runnable aRunnable = new Runnable(){
 	    	public void run() {
 				System.out.println("Thread " + i + " started...");
 				try {
 				System.out.println(i + ". in tryBlock");
 				//finder board og sender dets boradString vidre.
-				aConnection.getPrintWriter().println(aBoard.getBoardString());
+				aConnection.getPrintWriter().println(tempBoard.getBoardString());
 				System.out.println("send");
 				String recivedString = aConnection.getBufferedReader().readLine();
 				System.out.println("read");
@@ -166,9 +120,9 @@ public class MasterMain extends MinimaxSingleThread {
 						System.out.println("connectionList.size after: " + connectionList.size());
 					}
 					System.out.println("Just running it locally!");
-					String boardString = aBoard.getBoardString();
+					String boardString = tempBoard.getBoardString();
 					int col = Character.getNumericValue(boardString.charAt(boardString.length()-1));
-					moves[col] = miniCalc(aBoard, DEPTH + 1);
+					moves[col] = tempBoard.minimaxCalc();
 				} catch (IOException e) {
 					e.printStackTrace();
 				} 
@@ -178,13 +132,13 @@ public class MasterMain extends MinimaxSingleThread {
 	    return aRunnable;
 	}
 	
-	private Runnable localThread(Board aBoard, int i){
+	private static Runnable localThread(Board aBoard, int i){
 	    Runnable aRunnable = new Runnable(){
 	    	public void run() {
 				System.out.println("Local thread " + i + " started...");
 				String boardString = aBoard.getBoardString();
 				int col = Character.getNumericValue(boardString.charAt(boardString.length()-1));
-				moves[col] = miniCalc(aBoard, DEPTH + 1);
+				moves[col] = aBoard.minimaxCalc();
 				
 				System.out.println("Local thread " + i + " Terminated!!!!");
 			} 
@@ -192,20 +146,4 @@ public class MasterMain extends MinimaxSingleThread {
 	    return aRunnable;
 	}
 	
-	public static void main(String args[]) {
-		long startTime, endTime;
-        Date date = new Date();
-        startTime = date.getTime();
-		
-        Board b = new Board("01011010232332324545545466666");
-//		NetworkMaster mnm = new NetworkMaster(b);
-		MasterMain mnmArgs = new MasterMain(b, args);
-//		mnm.minimaxCalc();
-		mnmArgs.minimaxCalc();
-		b.display();
-		
-		Date date1 = new Date();
-        endTime = date1.getTime();
-        System.out.println("time used in ms" + (endTime - startTime));
-	}
 }

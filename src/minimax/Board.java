@@ -1,14 +1,30 @@
-package Minimax;
+package minimax;
+
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
+import master.MasterMain;
 
 public class Board {
 
-    private final int ROW = 6, COL = 7;
+    private final int ROW = 6;
+	private final int COL = 7;
+	private final int MAX_DEPTH = 10;
     private final String BOARD_STRING;
+    private final int DEPTH;
     private Character[][] board;
     private Character player;
 
     public Board(String s) {
         BOARD_STRING = s;
+        DEPTH = 1;
+        board = new Character[this.ROW][this.COL];
+        createBoard(s);
+    }
+    
+    public Board(String s, int depth) {
+        BOARD_STRING = s;
+        DEPTH = depth;
         board = new Character[this.ROW][this.COL];
         createBoard(s);
     }
@@ -28,7 +44,11 @@ public class Board {
     public int getCol() {
         return this.COL;
     }
-
+    
+    public int getMaxDepth(){
+    	return MAX_DEPTH;
+    }
+    
     public Character getPlayer() {
         return player;
     }// end getPlayer
@@ -68,7 +88,8 @@ public class Board {
         }
         return -1;
     }// end firstEmptyIncol
-
+    
+    //TODO change it
     public boolean isTied(int tempDepth, int maxDepth) {
         if (BOARD_STRING.length() == (ROW * COL)) {
             return true;
@@ -179,15 +200,121 @@ public class Board {
     public Boolean isBoardFull() {
         return BOARD_STRING.length() == (this.COL * this.ROW);
     }
-
+    
     public void display() {
-        for (Character[] aBoard : this.board) {
-            for (Character anABoard : aBoard) {
-                System.out.print(anABoard + "\t");
-            }
-            System.out.println();
-        }
-    }//end display
+    	System.out.println(" _______________________________________________________");
+    	for (int i = ROW-1; i >= 0; i--){
+    		System.out.print("|");
+    		for (int j = 0; j < COL; j++){
+    			if( board[i][j] == null){
+    				System.out.print("\t|");
+    			} else {
+        			System.out.print("   " +  Character.toUpperCase(board[i][j]) + "   |");	
+    			}
+    		}
+    		System.out.println();
+    		System.out.println("|_______|_______|_______|_______|_______|_______|_______|");
+    	}
+    	System.out.println("    1       2       3       4       5        6      7");
+    }
+    
+    
 
+    //---------------------- Minimax Section ---------------------//
+     
+    public double[] minimaxCalc(Boolean multiThread, Boolean distabute){
+    	double[] moves = new double[COL];
+        ExecutorService threadPool = Executors.newCachedThreadPool();
+        
+		for(int i = 0; i < COL; i++){
+			int row = firstEmptyInCol(i);
+			if(row != -1){  // når row er -1 hvis rækken er fuld
+				Board tempBoard = new Board(BOARD_STRING.concat(String.valueOf(i)), DEPTH + 1);
+				if(tempBoard.isTerminal(row, i)){ 
+					//terminal
+					//System.out.println(tempBoard.getBoardString() + " is terminal ");
+					moves[i] = terminalValue();
+				} else if(tempBoard.isBoardFull()) {//tie - behøver ikke cutoff i noden 
+					moves[i] = 1;
+				} else {
+					if(distabute){
+						MasterMain.notTerminalBoardList.add(tempBoard);
+					} else if(multiThread){
+						int j = i;
+	                    threadPool.execute(new Runnable() {
+	                        public void run() {
+	                            System.out.println("Thread " + j + " started...");
+	                            moves[j] = tempBoard.minimaxCalc();
+	                            System.out.println("Thread " + j + " Terminated!!!!!");
+	                        }
+	                    });
+					} else {
+						moves[i] = tempBoard.minimaxCalc();
+					}
+				}
+			}
+		}
+		
+		threadPool.shutdown();
+        while (!threadPool.isTerminated()) {}
+        
+		return moves;
+	}
+    
+    public double minimaxCalc() {
+		
+		int terminalCounter = 0;
+		int minOrMaxIdentifier = DEPTH % 2; 
+		double tempValue;
+		if (minOrMaxIdentifier == 0){
+			tempValue = 1000; // finder min
+		} else {
+			tempValue = -1000; //finder max
+		}
+		for(int i = 0; i < COL; i++){
+			int row = firstEmptyInCol(i);
+			if(row != -1){
+				Board tempBoard = new Board(BOARD_STRING.concat(String.valueOf(i)), DEPTH + 1);
+				if(tempBoard.isTerminal(row, i)){ 
+					//terminal
+					terminalCounter++;
+					tempValue = findMinOrMax(minOrMaxIdentifier, tempValue, terminalValue());
+				} else if(tempBoard.isBoardFull()) {//tie - TODO cutoff
+					tempValue = 1;//findMinOrMax(minOrMaxIdentifier, tempValue, 50/DEPTH);
+				} else if (DEPTH == MAX_DEPTH){
+					tempValue = 1;//findMinOrMax(minOrMaxIdentifier, tempValue, 50/DEPTH);
+				} else {
+					tempValue = findMinOrMax(minOrMaxIdentifier, tempValue, tempBoard.minimaxCalc());
+				}
+			}
+		}
+		
+		if(terminalCounter >= 2){
+			if(minOrMaxIdentifier == 0){
+				tempValue = -99/DEPTH; //ikke sikke på at dybden skal med
+			} else {
+				tempValue = 99/DEPTH; 
+			}
+		} 
+		
+		return tempValue;
+	}
 
+	private double findMinOrMax(int identifier, double oldValue, double newValue) {
+		if(identifier == 0){
+			return Math.min(oldValue, newValue);
+		} else {
+			return Math.max(oldValue, newValue);
+		}
+	}
+
+	private double terminalValue() {
+		if(DEPTH % 2 == 1){
+			return 100/DEPTH; //our turn
+		} else {
+			return -100/DEPTH; //opp turn
+		}
+	}
+
+    
 }// end board
