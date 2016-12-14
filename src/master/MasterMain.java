@@ -1,8 +1,6 @@
 package master;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.net.ConnectException;
 import java.net.SocketException;
 import java.net.UnknownHostException;
@@ -10,9 +8,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 
-import minimax.Board;
 import minimax.Board;
 
 public class MasterMain {
