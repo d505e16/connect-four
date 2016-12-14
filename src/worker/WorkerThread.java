@@ -28,9 +28,18 @@ public class WorkerThread implements Runnable {
         String returnString = null;
         
         //det sendte boards "forgænger" TODO refaktoricer minimaxCalc(): klam kode....
+        
+        double[] resArray = board.minimaxCalc(true, false);
+        
+        double miniValue = 1000;
 
-        double miniValue = board.minimaxCalc();
-        System.out.println("miniCalc run: miniValue: " + miniValue);
+		for(int i = 0; i < resArray.length; i++){	
+			if(resArray[i] < miniValue && resArray[i] != 0){ 
+				miniValue = resArray[i];
+			}
+		}
+        
+        System.out.println("miniValue: " + miniValue);
         
         //sender boardString tilbage med :miniValue eks. 1220125461:-25
         returnString = (boardString + ":" + miniValue);

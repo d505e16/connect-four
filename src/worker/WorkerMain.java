@@ -51,7 +51,7 @@ public class WorkerMain {
 				}
 			}
 		} catch (SocketException e) {
-			System.out.println("\nThe connection with the master was lost! Server resat\nServer running..");
+			System.out.println("\nCalculations DONE! \n\nWorker ...");
 			communicateWithMaster(serverSocket);
 		} catch (IOException e) {
 			e.printStackTrace();

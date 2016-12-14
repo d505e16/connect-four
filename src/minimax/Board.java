@@ -7,9 +7,9 @@ import master.MasterMain;
 
 public class Board {
 
+	public static final int COL = 7;
     private final int ROW = 6;
-	private final int COL = 7;
-	private final int MAX_DEPTH = 10;
+	private final int MAX_DEPTH = 9;
     private final String BOARD_STRING;
     private final int DEPTH;
     private Character[][] board;
@@ -261,15 +261,16 @@ public class Board {
 		return moves;
 	}
     
+    
     public double minimaxCalc() {
-		
+  
+    	double returnValue;
 		int terminalCounter = 0;
 		int minOrMaxIdentifier = DEPTH % 2; 
-		double tempValue;
 		if (minOrMaxIdentifier == 0){
-			tempValue = 1000; // finder min
+			returnValue = 1000; // finder min
 		} else {
-			tempValue = -1000; //finder max
+			returnValue = -1000; //finder max
 		}
 		for(int i = 0; i < COL; i++){
 			int row = firstEmptyInCol(i);
@@ -278,28 +279,29 @@ public class Board {
 				if(tempBoard.isTerminal(row, i)){ 
 					//terminal
 					terminalCounter++;
-					tempValue = findMinOrMax(minOrMaxIdentifier, tempValue, terminalValue());
+					returnValue = findMinOrMax(minOrMaxIdentifier, returnValue, terminalValue());
 				} else if(tempBoard.isBoardFull()) {//tie - TODO cutoff
-					tempValue = 1;//findMinOrMax(minOrMaxIdentifier, tempValue, 50/DEPTH);
+					returnValue = 1;//findMinOrMax(minOrMaxIdentifier, tempValue, 50/DEPTH);
 				} else if (DEPTH == MAX_DEPTH){
-					tempValue = 1;//findMinOrMax(minOrMaxIdentifier, tempValue, 50/DEPTH);
+					returnValue = 1;//findMinOrMax(minOrMaxIdentifier, tempValue, 50/DEPTH);
 				} else {
-					tempValue = findMinOrMax(minOrMaxIdentifier, tempValue, tempBoard.minimaxCalc());
+					returnValue = findMinOrMax(minOrMaxIdentifier, returnValue, tempBoard.minimaxCalc());
 				}
+				
 			}
 		}
 		
 		if(terminalCounter >= 2){
 			if(minOrMaxIdentifier == 0){
-				tempValue = -99/DEPTH; //ikke sikke på at dybden skal med
+				returnValue = -99/DEPTH; //ikke sikke på at dybden skal med
 			} else {
-				tempValue = 99/DEPTH; 
+				returnValue = 99/DEPTH; 
 			}
 		} 
 		
-		return tempValue;
+		return returnValue;
 	}
-
+    
 	private double findMinOrMax(int identifier, double oldValue, double newValue) {
 		if(identifier == 0){
 			return Math.min(oldValue, newValue);
