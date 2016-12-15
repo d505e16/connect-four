@@ -1,8 +1,6 @@
 package master;
 
-//import java.io.BufferedReader;
 import java.io.IOException;
-//import java.io.PrintWriter;
 import java.net.ConnectException;
 import java.net.SocketException;
 import java.net.UnknownHostException;
@@ -10,10 +8,8 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-//import java.util.concurrent.TimeUnit;
 
 import minimax.Board;
-
 
 public class MasterMain {
 	public static ArrayList<Board> notTerminalBoardList = new ArrayList<Board>();
@@ -28,12 +24,11 @@ public class MasterMain {
 		ExecutorService threadPool = Executors.newCachedThreadPool();
 
 		getWorkers(args);
-		Board board = new Board("0101101023233232454554546666610"); // skal hentes far input
+		Board board = new Board("2365245"); // skal hentes fra input
 		
-//		board.minimaxCalc(false);
 		board.minimaxCalc(false, true);
 		
-		distabuteNotTerminalString(threadPool);
+		distributeNotTerminalString(threadPool);
 		
 		threadPool.shutdown();
         while (!threadPool.isTerminated()) {}
@@ -74,21 +69,24 @@ public class MasterMain {
         }
     }
 	
-	private static void distabuteNotTerminalString(ExecutorService threadPool){
+	private static void distributeNotTerminalString(ExecutorService threadPool){
 		int nextConnection = 0;
 		for(int i = 0; i < notTerminalBoardList.size(); i++){
 			Board tempBoard = notTerminalBoardList.get(i);
-			if(nextConnection == connectionList.size()){
-				System.out.println("Thread "  + i + " local starts..");
-				threadPool.execute(localThread(tempBoard, i));
-				System.out.println("Thread "  + i + " local ends");
+//			if(nextConnection == connectionList.size()){
+//				System.out.println("Thread "  + i + " local starts..");
+//				threadPool.execute(localThread(tempBoard, i));
+//				System.out.println("Thread "  + i + " local ends");
+//				nextConnection = 0;
+//			} else {
+			if(nextConnection == connectionList.size() ){
 				nextConnection = 0;
-			} else {
-				System.out.println("Thread "  + i + " at connection " + nextConnection + " starts..");
-				threadPool.execute(connectionThread(connectionList.get(nextConnection), tempBoard, i));
-				System.out.println("Thread "  + i + " at connection " + nextConnection + " enden!");
-				nextConnection++;
 			}
+			System.out.println("Thread "  + i + " at connection " + nextConnection + " starts..");
+			threadPool.execute(connectionThread(connectionList.get(nextConnection), tempBoard, i));
+			System.out.println("Thread "  + i + " at connection " + nextConnection + " enden!");
+			nextConnection++;
+			
 		}	
 	}
 	

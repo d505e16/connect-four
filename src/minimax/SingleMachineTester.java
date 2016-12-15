@@ -10,7 +10,7 @@ public class SingleMachineTester {
         startTime = date.getTime();
         
         
-        String s = "0132154542210";
+        String s = "3";
         Board board = new Board(s);
 
        
@@ -24,16 +24,16 @@ public class SingleMachineTester {
 		for(int i = 0; i < board.getCol(); i++){	
 			if(res[i] >= best && res[i] != 0){ // missing ground rules - center first
 				if (res[i] == best && (Math.abs(i - center) > (Math.abs(bestCol - center)))){
-					System.out.println(i + " the best is still: " + best);
+//					System.out.println(i + " the best is still: " + best);
 				} else {
 					best = res[i];
-					System.out.println(i + " new the best is: " + best);
+//					System.out.println(i + " new the best is: " + best);
 					bestCol = i;
 				}
 			}
 		}
 		
-		System.out.println("Best Col is :" + (bestCol + 1) );
+		System.out.println("Best Col is :" + bestCol );
 		
         
 		

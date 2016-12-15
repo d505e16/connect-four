@@ -7,9 +7,9 @@ import master.MasterMain;
 
 public class Board {
 
-	public static final int COL = 7;
     private final int ROW = 6;
-	private final int MAX_DEPTH = 9;
+	public static final int COL = 7;
+	private final int MAX_DEPTH = 8; // skal nok være 10
     private final String BOARD_STRING;
     private final int DEPTH;
     private Character[][] board;
@@ -215,12 +215,12 @@ public class Board {
     		System.out.println();
     		System.out.println("|_______|_______|_______|_______|_______|_______|_______|");
     	}
-    	System.out.println("    1       2       3       4       5        6      7");
+    	System.out.println("    0       1       2       3       4       5       6");
     }
     
     
 
-    //---------------------- Minimax Section ---------------------//
+    //------------------------------------ Minimax Section ----------------------------------------------//
      
     public double[] minimaxCalc(Boolean multiThread, Boolean distabute){
     	double[] moves = new double[COL];
@@ -235,7 +235,7 @@ public class Board {
 					//System.out.println(tempBoard.getBoardString() + " is terminal ");
 					moves[i] = terminalValue();
 				} else if(tempBoard.isBoardFull()) {//tie - behøver ikke cutoff i noden 
-					moves[i] = 1;
+					moves[i] = 0; // var 1 før
 				} else {
 					if(distabute){
 						MasterMain.notTerminalBoardList.add(tempBoard);
@@ -265,7 +265,6 @@ public class Board {
     public double minimaxCalc() {
   
     	double returnValue;
-		int terminalCounter = 0;
 		int minOrMaxIdentifier = DEPTH % 2; 
 		if (minOrMaxIdentifier == 0){
 			returnValue = 1000; // finder min
@@ -278,27 +277,21 @@ public class Board {
 				Board tempBoard = new Board(BOARD_STRING.concat(String.valueOf(i)), DEPTH + 1);
 				if(tempBoard.isTerminal(row, i)){ 
 					//terminal
-					terminalCounter++;
 					returnValue = findMinOrMax(minOrMaxIdentifier, returnValue, terminalValue());
-				} else if(tempBoard.isBoardFull()) {//tie - TODO cutoff
-					returnValue = 1;//findMinOrMax(minOrMaxIdentifier, tempValue, 50/DEPTH);
-				} else if (DEPTH == MAX_DEPTH){
-					returnValue = 1;//findMinOrMax(minOrMaxIdentifier, tempValue, 50/DEPTH);
+				} else if(tempBoard.isBoardFull()) {
+					returnValue = 0; 
+				} else if (DEPTH >= MAX_DEPTH){
+					if(minOrMaxIdentifier == 0){ //kun nødvendig hvis man må ændre på MAX_DEPTH
+						returnValue = heuristicValue(player); 			
+					} else{
+						returnValue = heuristicValue(getNextTurn());
+					}
 				} else {
 					returnValue = findMinOrMax(minOrMaxIdentifier, returnValue, tempBoard.minimaxCalc());
 				}
 				
 			}
-		}
-		
-		if(terminalCounter >= 2){
-			if(minOrMaxIdentifier == 0){
-				returnValue = -99/DEPTH; //ikke sikke på at dybden skal med
-			} else {
-				returnValue = 99/DEPTH; 
-			}
-		} 
-		
+		}		
 		return returnValue;
 	}
     
@@ -310,13 +303,224 @@ public class Board {
 		}
 	}
 
-	private double terminalValue() {
+	private double terminalValue() { // skal bare være +/-100 - kan laves til int
 		if(DEPTH % 2 == 1){
-			return 100/DEPTH; //our turn
+//			return 100/DEPTH; //our turn
+			return 100; //representere +uendelig
 		} else {
-			return -100/DEPTH; //opp turn
+			return -100; //representere -uendelig
+//			return -100/DEPTH; //opp turn
 		}
 	}
+	
+	 //------------------------------ Heuristic value calculation ----------------------------------//
+	
+	public double heuristicValue(Character player){ //TODO change to int
+		return horizontalValue(player) +
+				verticalValue(player) + 
+				diagonalGoingRightValue(player) +
+				diagonalGoingLeftValue(player);
+	}
+	
+	private int horizontalValue(Character player){ 
+		int xWins = 0; //Player is the next one to place a brick
+		int oWins = 0;
+		for (int row = 0; row < board.length; row++){
+			int xCounter = 0;
+			int oCounter = 0;
+	    	int nullForXCounter = 0;
+	    	int nullForOCounter = 0; 
+			for (int col = 0; col < board[row].length; col++){ // basic - skal gøres mere elegant
+		    	 Character brick = board[row][col];
+		    	 if( brick == null ) {
+		    		 if(xCounter > 0){
+		    			 xCounter++;
+		    			 nullForOCounter++;
+		    			 if(nullForOCounter == 4){
+		    				 xCounter = 0;
+		    			 } else if(xCounter == 4){
+		    				 xWins++;
+				    		 xCounter--;
+				    	 }
+		    		 } else if(oCounter > 0){
+		    			 oCounter++;
+		    			 nullForXCounter++;
+		    			 if(nullForXCounter == 4){
+		    				 oCounter = 0;
+		    			 } else if(oCounter == 4){
+				    		 oWins++;
+				    		 oCounter--;
+				    	 }
+		    		 } else {
+		    			 if(nullForXCounter < 3) {
+		    				 nullForXCounter++;
+		    			 }
+		    			 if(nullForOCounter < 3) {
+		    				 nullForOCounter++;
+		    			 }
+		    		 } 
+		    		 
+		    	 } else if(brick == 'x'){
+		    		 xCounter++;
+		    		 xCounter += nullForXCounter;
+			    	 nullForXCounter = 0;
+			    	 nullForOCounter = 0;
+		    		 oCounter = 0;
+			    	 if(xCounter == 4){
+			    		 xWins++;
+			    		 xCounter--;
+			    	 }
+			    	 
+		    	 } else {
+		    		 oCounter++;
+		    		 oCounter += nullForOCounter;
+			    	 nullForOCounter = 0;
+			    	 nullForXCounter = 0;
+		    		 xCounter = 0;
+			    	 if(oCounter == 4){
+			    		 oWins++;
+			    		 oCounter--;
+			    	 } 
+		    	 }
+		    	  
+		     } 
 
+		}
+		
+		if (player == 'x'){
+			return xWins - oWins;
+		} else {
+			return oWins - xWins;
+		}
+	}
+	
+	// køre hver col oppefra og ned..
+	// mindre arbejde hvis man kunne kunne vinde en gang op "brakeble"
+	private int verticalValue(Character player){ 
+		int xWins = 0; 
+		int oWins = 0;
+		for(int col = 0; col < COL; col++){ 
+			Character winner = null;
+			int winnerCounter = 0;
+	    	int nullCounter = 0;
+			
+			for(int row = ROW - 1; row >= 0; row--){
+				if(board[row][col] == null && winner == null){ // if null
+					if(nullCounter < 3){
+						nullCounter++;
+					}
+					
+				} else if (board[row][col] == 'x'){ // if x
+					if(winner == null || winner == 'x'){
+						winner = 'x';
+						if(nullCounter > 0){
+							winnerCounter += nullCounter;
+							nullCounter = 0;
+						}
+						winnerCounter++;
+						
+						if(winnerCounter == 4){
+							xWins++;
+							winnerCounter--;
+						}
+					} else{
+						break;
+					}
+					
+				} else { //if o
+					if(winner == null || winner == 'o'){
+						winner = 'o';
+						if(nullCounter > 0){
+							winnerCounter += nullCounter;
+							nullCounter = 0;
+						}
+						winnerCounter++;
+						
+						if(winnerCounter == 4){
+							oWins++;
+							winnerCounter--;
+						}
+					} else{
+						break;
+					}
+				}
+				
+				
+			}
+		}
+		
+		if (player == 'x'){
+			return xWins - oWins;
+		} else {
+			return oWins - xWins;
+		}
+	}
+	
+	
+	// ikke køn, men hvis det virker... nogle coordinater hentes et par gange..
+	private int diagonalGoingRightValue(Character player){		
+		int xWins = 0; 
+		int oWins = 0;
+		for(int row = 0; row < ROW - 3; row++){ 						// der tages udgangspunkt i et coordianlt, så efter col 2 kan man ikke vinde opad
+			for(int col = 0; col < COL - 3; col++){ 					// der tages udgangspunkt i et coordianlt, så efter col 4 kan man ikke vinde med højre
+				if(board[row][col] == null){
+					// moving on
+				} else {
+					Character winner = board[row][col];					// sætter rækkens mulige vinner
+																		// checker om det er en modstander brik i vejen for at vinde:
+					if( (board[row+1][col+1] == winner || board[row+1][col+1] == null) &&
+						(board[row+2][col+2] == winner || board[row+2][col+2] == null) &&
+						(board[row+3][col+3] == winner || board[row+3][col+3] == null)) {
+						if(winner == 'x'){
+							xWins++;
+						} else {
+							oWins++;
+						}
+					} else {
+						// moving on
+					}
+				}
+			}
+		}
+	
+		if (player == 'x'){
+			return xWins - oWins;
+		} else {
+			return oWins - xWins;
+		}
+	}
+	
+	private int diagonalGoingLeftValue(Character player){
+		int xWins = 0; 
+		int oWins = 0;
+		for(int row = 0; row < ROW - 3; row++){ 						// der tages udgangspunkt i et coordianlt, så efter col 2 kan man ikke vinde opad
+			for(int col = COL-1; col > 2; col--){ 						// der tages udgangspunkt i et coordianlt, så efter col 4 kan man ikke vinde med højre
+				if(board[row][col] == null){
+					// moving on
+				} else {
+					Character winner = board[row][col];					// sætter rækkens mulige vinner
+																		// checker om det er en modstander brik i vejen for at vinde:
+					if( (board[row+1][col-1] == winner || board[row+1][col-1] == null) &&
+						(board[row+2][col-2] == winner || board[row+2][col-2] == null) &&
+						(board[row+3][col-3] == winner || board[row+3][col-3] == null)) {
+						if(winner == 'x'){
+							xWins++;
+						} else {
+							oWins++;
+						}
+					} else {
+						// moving on
+					}
+				}
+			}
+		}
+		
+		if (player == 'x'){
+			return xWins - oWins;
+		} else {
+			return oWins - xWins;
+		}
+	}
+	
     
 }// end board
