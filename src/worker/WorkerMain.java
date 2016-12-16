@@ -23,6 +23,7 @@ public class WorkerMain {
         	try {
 				serverSocket = new ServerSocket(port);
 				System.out.println("Running on port: " + port);
+				keyboard.close();
 			} catch(BindException e){
 	        	System.out.println("Port " + port + " is already in use! \nEnter another port number for socket:");
 	        	port = keyboard.nextInt();
