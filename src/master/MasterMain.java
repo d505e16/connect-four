@@ -9,9 +9,6 @@ import java.util.Date;
 import java.util.Scanner;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-
-import com.sun.xml.internal.ws.util.StringUtils;
-
 import minimax.Board;
 
 public class MasterMain {
@@ -21,6 +18,7 @@ public class MasterMain {
 
 	
 	public static void main(String[] args) {
+
 		Scanner keyboard = new Scanner(System.in);
 		ExecutorService threadPool = Executors.newCachedThreadPool();
 		getWorkers(args);
@@ -30,20 +28,11 @@ public class MasterMain {
 		long startTime = 0, endTime = 0;
 		Boolean imputIsNumber = false;
 		Boolean helpRecived = false;
-		int inputLength = 0;
 		
 		do{
 			if(threadPool.isShutdown()){
 				threadPool = Executors.newCachedThreadPool();
 			}
-			
-//			try {
-//				board = new Board(boardString);
-//			} catch (ArrayIndexOutOfBoundsException e) {
-//				System.out.println("hello");
-//				boardString = boardString.substring(0, boardString.length()-inputLength);
-//				board = new Board(boardString);
-//			}
 			
 			board.display();
 			
@@ -123,8 +112,11 @@ public class MasterMain {
 			} else if (!imputIsNumber) {
 				System.out.println("Command not recognized");
 			}
-	
+	        clearConsole();	// skulle virke når den køres i promt 
+	        
 		} while(true);
+		
+		keyboard.close();
 	}
 	
 	private static void getWorkers(String[] args) {
@@ -211,21 +203,20 @@ public class MasterMain {
 	    return aRunnable;
 	}
 	
-	private static Runnable localThread(Board aBoard, int i){
-	    Runnable aRunnable = new Runnable(){
-	    	public void run() {
-				System.out.println("Local thread " + i + " started...");
-				String boardString = aBoard.getBoardString();
-				int col = Character.getNumericValue(boardString.charAt(boardString.length()-1));
-				moves[col] = aBoard.minimaxCalc();
-				
-				System.out.println("Local thread " + i + " Terminated!!!!");
-			} 
-	    };
-	    return aRunnable;
-	}
+//	private static Runnable localThread(Board aBoard, int i){
+//	    Runnable aRunnable = new Runnable(){
+//	    	public void run() {
+//				System.out.println("Local thread " + i + " started...");
+//				String boardString = aBoard.getBoardString();
+//				int col = Character.getNumericValue(boardString.charAt(boardString.length()-1));
+//				moves[col] = aBoard.minimaxCalc();
+//				
+//				System.out.println("Local thread " + i + " Terminated!!!!");
+//			} 
+//	    };
+//	    return aRunnable;
+//	}
 	
-	//TODO skal testes i konsol
     public static void clearConsole()
     {
         try
@@ -238,9 +229,7 @@ public class MasterMain {
             }
         }
         catch (final Exception e)
-        {
-            //  Handle any exceptions.
-        }
+        {}
     }
 	
 }
