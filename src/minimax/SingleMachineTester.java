@@ -1,5 +1,7 @@
 package minimax;
 
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Date;
 
 public class SingleMachineTester {
@@ -10,7 +12,7 @@ public class SingleMachineTester {
         startTime = date.getTime();
         
         
-        String s = "3";
+        String s = "211565544663324";
         Board board = new Board(s);
 
        
@@ -43,12 +45,12 @@ public class SingleMachineTester {
 			System.out.print(res[i] + ", ");
 		}
 		System.out.println(")");
-		
-        
-		
+
        
         Date date1 = new Date();
         endTime = date1.getTime();
         System.out.println("time used in ms" + (endTime - startTime));
+       
     }
+    
 }

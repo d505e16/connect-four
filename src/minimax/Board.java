@@ -45,8 +45,8 @@ public class Board {
         return this.COL;
     }
     
-    public int getMaxDepth(){
-    	return MAX_DEPTH;
+    public int getDepth(){
+    	return this.DEPTH;
     }
     
     public Character getPlayer() {
@@ -232,7 +232,6 @@ public class Board {
 				Board tempBoard = new Board(BOARD_STRING.concat(String.valueOf(i)), DEPTH + 1);
 				if(tempBoard.isTerminal(row, i)){ 
 					//terminal
-					//System.out.println(tempBoard.getBoardString() + " is terminal ");
 					moves[i] = terminalValue();
 				} else if(tempBoard.isBoardFull()) {//tie - behøver ikke cutoff i noden 
 					moves[i] = 0; // var 1 før
@@ -243,9 +242,9 @@ public class Board {
 						int j = i;
 	                    threadPool.execute(new Runnable() {
 	                        public void run() {
-	                            System.out.println("Thread " + j + " started...");
+//	                            System.out.println("Thread " + j + " started...");
 	                            moves[j] = tempBoard.minimaxCalc();
-	                            System.out.println("Thread " + j + " Terminated!!!!!");
+//	                            System.out.println("Thread " + j + " Terminated!!!!!");
 	                        }
 	                    });
 					} else {
@@ -280,7 +279,7 @@ public class Board {
 					returnValue = findMinOrMax(minOrMaxIdentifier, returnValue, terminalValue());
 				} else if(tempBoard.isBoardFull()) {
 					returnValue = 0; 
-				} else if (DEPTH >= MAX_DEPTH){
+				} else if (DEPTH == MAX_DEPTH){
 					if(minOrMaxIdentifier == 0){ //kun nødvendig hvis man må ændre på MAX_DEPTH
 						returnValue = heuristicValue(player); 			
 					} else{
@@ -323,7 +322,7 @@ public class Board {
 	}
 	
 	private int horizontalValue(Character player){ 
-		int xWins = 0; //Player is the next one to place a brick
+		int xWins = 0;
 		int oWins = 0;
 		for (int row = 0; row < board.length; row++){
 			int xCounter = 0;
