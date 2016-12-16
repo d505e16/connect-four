@@ -15,10 +15,9 @@ public class MasterMain {
 	public static ArrayList<Board> notTerminalBoardList = new ArrayList<Board>();
 	private static ArrayList<Connection> connectionList = new ArrayList<Connection>();
 	private static double[] moves = new double[Board.COL];
-
 	
 	public static void main(String[] args) {
-
+		
 		Scanner keyboard = new Scanner(System.in);
 		ExecutorService threadPool = Executors.newCachedThreadPool();
 		getWorkers(args);
