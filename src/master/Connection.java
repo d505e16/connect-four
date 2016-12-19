@@ -7,35 +7,23 @@ import java.io.PrintWriter;
 import java.net.Socket;
 import java.net.UnknownHostException;
 
-public class Connection {
-	private Socket socket;
-	private PrintWriter printWriter;
-	private InputStreamReader inputStreamReader;
-	private BufferedReader bufferedReader;
-	private int port;
-	private String adress;
-	
-	public Connection(String anAdress, String aPort) throws UnknownHostException, IOException {
-		this.adress = anAdress;
-		this.port = Integer.valueOf(aPort);
+class Connection {
+    private PrintWriter printWriter;
+    private BufferedReader bufferedReader;
 
-		socket = new Socket(adress, port);
-		printWriter = new PrintWriter(socket.getOutputStream(), true);
-		inputStreamReader = new InputStreamReader(socket.getInputStream());
-		bufferedReader = new BufferedReader(inputStreamReader);
-	}
-	
-	public Socket getSocket() {
-		return socket;
-	}
-	
-	public PrintWriter getPrintWriter() {
-		return printWriter;
-	}
+    Connection(String anAdress, String aPort) throws IOException {
+        int port = Integer.valueOf(aPort);
+        Socket socket = new Socket(anAdress, port);
+        InputStreamReader inputStreamReader = new InputStreamReader(socket.getInputStream());
+        printWriter = new PrintWriter(socket.getOutputStream(), true);
+        bufferedReader = new BufferedReader(inputStreamReader);
+    }
 
-	public BufferedReader getBufferedReader() {
-		return bufferedReader;
-	}
+    PrintWriter getPrintWriter() {
+        return printWriter;
+    }
 
-
+    BufferedReader getBufferedReader() {
+        return bufferedReader;
+    }
 }
