@@ -44,14 +44,16 @@ public class MasterMain {
 				double best = -1000;
 				int bestCol = 10;
 				int center = 3;
-				for(int i = 0; i < board.getCol(); i++){	
-					if(moves[i] >= best && moves[i] != 0){ // missing ground rules - center first
-						if (moves[i] == best && (Math.abs(i - center) > (Math.abs(bestCol - center)))){
-							//still best
-						} else {
-							best = moves[i];
-							bestCol = i;
-						}
+				for(int i = 0; i < board.getCol(); i++){
+					if(board.firstEmptyInCol(i) == -1) {
+						moves[i] = -1000;
+					} else if(moves[i] >= best && moves[i] != 0){ // missing ground rules - center first
+							if (moves[i] == best && (Math.abs(i - center) > (Math.abs(bestCol - center)))){
+								//still best
+							} else {
+								best = moves[i];
+								bestCol = i;
+							}
 					}
 				}
 				

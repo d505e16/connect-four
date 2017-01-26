@@ -207,7 +207,7 @@ public class Board {
     		System.out.print("|");
     		for (int j = 0; j < COL; j++){
     			if( board[i][j] == null){
-    				System.out.print("\t|");
+    				System.out.print("\t\t|");
     			} else {
         			System.out.print("   " +  Character.toUpperCase(board[i][j]) + "   |");	
     			}
